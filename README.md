@@ -1,5 +1,7 @@
 # Documentation Links
 
+![Gif of dashboard](gif.gif)
+
 [Full Documentation](https://dash.plot.ly/)
 
 [Dash Bootstrap Components](http://dash-bootstrap-components.opensource.faculty.ai/)
