@@ -26,7 +26,7 @@ drop = html.Div(dcc.Dropdown(
     id='pop_dropdown',
     options=dropdown,
     value='Springfield city, Illinois'),
-    style={'width': '60%', 'display': 'inline-block'})
+    style={'width': '30%'})
 
 header = html.H3(
     "Type the name of an Illinois city to see its population change:",
