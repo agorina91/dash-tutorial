@@ -1,6 +1,6 @@
 # Documentation Links
 
-![Gif of dashboard](gif.gif)
+![Gif of dashboard](images/gif.gif)
 
 [Full Documentation](https://dash.plot.ly/)
 
@@ -11,6 +11,3 @@
 [Multi Page Layout](https://dash.plot.ly/urls)
 
 [Graphing Layout](https://dash.plot.ly/getting-started)
-
-
-
