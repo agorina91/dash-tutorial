@@ -1,80 +1,15 @@
-import pandas as pd
-
-import plotly.graph_objects as go
-
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 
-import pickle
-import sys
-from time import sleep
-from app import build_bar, bar_page
+from app import app_layout, build_graph
 
+from homepage import Homepage
 
-df = pd.read_csv('insta_yearly.csv')
-df.set_index(df.iloc[:, 0], drop=True, inplace=True)
-df = df.iloc[:, 1:]
-
-with open('dropdown', 'rb') as fp:
-    options = pickle.load(fp)
-
-
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUX])
-
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.UNITED])
 app.config.suppress_callback_exceptions = True
-
-
-def index_page():
-    navbar = dbc.NavbarSimple(
-        children=[
-            dbc.NavItem(dbc.NavLink("Bar Graph", href="/bar")),
-
-        ],
-        brand="Home",
-        brand_href="#",
-        sticky="top",
-    )
-
-    body = dbc.Container(
-        [
-            dbc.Row(
-                [
-                    dbc.Col(
-                        [
-                            html.H2("Heading"),
-                            html.P(
-                                """\
-    Donec id elit non mi porta gravida at eget metus.
-    Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum
-    nibh, ut fermentum massa justo sit amet risus. Etiam porta sem
-    malesuada magna mollis euismod. Donec sed odio dui. Donec id elit non
-    mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus
-    commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit
-    amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed
-    odio dui."""
-                            ),
-                            dbc.Button("View details", color="secondary"),
-                        ],
-                        md=4,
-                    ),
-                    dbc.Col(
-                        [
-                            html.H2("Graph"),
-                            dcc.Graph(
-                                figure={
-                                    "data": [{"x": [1, 2, 3], "y": [1, 4, 9]}]}
-                            ),
-                        ]
-                    ),
-                ]
-            )
-        ],
-        className="mt-4",
-    )
-    return html.Div([navbar, body])
 
 
 app.layout = html.Div([
@@ -82,22 +17,23 @@ app.layout = html.Div([
     html.Div(id='page-content')
 ])
 
-
 @app.callback(dash.dependencies.Output('page-content', 'children'),
               [dash.dependencies.Input('url', 'pathname')])
 def display_page(pathname):
-    if pathname == '/bar':
-        return bar_page()
+    if pathname == '/time-series':
+        return app_layout()
     else:
-        return index_page()
+        return Homepage()
 
 
 @app.callback(
-    Output('output', 'children'),
-    [Input('year-dropdown', 'value')])
-def update_graph(year):
+    Output(component_id='output', component_property='children'),
+    [Input(component_id='pop_dropdown', component_property='value')])
+def update_graph(value):
 
-    return build_bar(year=int(year))
+    graph = build_graph(value)
+
+    return graph
 
 
 if __name__ == '__main__':

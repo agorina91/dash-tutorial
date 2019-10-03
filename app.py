@@ -1,87 +1,116 @@
-import pandas as pd
-
-import plotly.graph_objects as go
-
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 
-import pickle
-import sys
-from time import sleep
+import pandas as pd
 
-df = pd.read_csv('insta_yearly.csv')
-df.set_index(df.iloc[:, 0], drop=True, inplace=True)
+import plotly.graph_objs as go
+
+import pickle
+
+
+df = pd.read_csv('population_il_cities.csv')
+df.index = df.iloc[:, 0]
+df.index = pd.to_datetime(df.index)
 df = df.iloc[:, 1:]
 
 with open('dropdown', 'rb') as fp:
-    options = pickle.load(fp)
+    dropdown = pickle.load(fp)
 
+# COMPONENTS
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.UNITED])
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUX])
+drop = html.Div(dcc.Dropdown(
+    id='pop_dropdown',
+    options=dropdown,
+    value='Springfield city, Illinois'),
+    style={'width': '60%', 'display': 'inline-block'})
 
+header = html.H3(
+    "Type the name of an Illinois city to see its population change:",
+    style={'padding': '10px'})
 
-dropdown = html.Div([dcc.Dropdown(id='year-dropdown',
-                                  options=options,
-                                  value='2018')],
-                    style={'width': '50vh',
-                           'margin': 'auto'}
-                    )
-
-
-bar_nav = dbc.NavbarSimple(
+navbar = dbc.NavbarSimple(
     children=[
-        dbc.NavItem(dbc.NavLink("Page 1", href="#")),
-        dbc.DropdownMenu(
-            children=[
-                dbc.DropdownMenuItem("More pages", header=True),
-                dbc.DropdownMenuItem("Page 2", href="#"),
-                dbc.DropdownMenuItem("Page 3", href="#"),
-            ],
-            nav=True,
-            in_navbar=True,
-            label="More",
-        ),
+        dbc.NavItem(dbc.NavLink("Time-Series", href="/time-series")),
+
     ],
-    brand="Home",
+    brand="Demo",
     brand_href="/home",
-    color="primary",
-    dark=True,
+    sticky="top",
+    color='primary'
 )
 
 
-def build_bar(year=2018):
+output = html.Div(id='output',
+                  children=[
+                      dcc.Graph(
+                          id='group-time-series',
+                          hoverData={'points': [
+                              {'customdata': 'Springfield city, Illinois'}]}
+                      )
+                  ],
+                  style={'display': 'inline-block'})
 
-    labels = list(df.columns)
-    values = list(df.loc[year].values)
-    print(labels, sys.stdout)
-    print(values, sys.stdout)
-    graph = html.Div(id='output',
-                     children=[dcc.Graph(id='bar-graph',
 
-                                         figure={'data': [go.Bar(
-                                             x=labels, y=values)],
-                                             'layout': go.Layout(
-                                             title='{} Instagram Stories'.format(
-                                                 year),
-                                             xaxis={
-                                                 'title': 'Day of the Week'},
-                                             yaxis={'title': 'Number of Stories in {}'.format(year)})})])
+# LAYOUT
+def app_layout():
+    layout = html.Div([
+        navbar,
+        header,
+        drop,
+        output
+    ])
+    return layout
+
+
+app.layout = html.Div([
+    header,
+    drop,
+    output,
+    # side
+])
+
+# GRAPH
+
+
+def build_graph(city):
+    data = [go.Scatter(x=df.index,
+                       y=df[city],
+                       mode='lines+markers',
+                       name=city,
+                       marker={'color': 'red'},
+                       customdata=[city for x in range(len(df.index))])]
+
+    graph = dcc.Graph(figure={
+
+        'data': data,
+
+
+        'layout': go.Layout(
+            title='{} Population Change'.format(city),
+            yaxis={'title': 'Population'},
+            hovermode='closest'
+        )
+    })
 
     return graph
 
 
-def bar_page():
-    layout = html.Div([bar_nav,
-                       dbc.Row([
-                           dbc.Col(dropdown,
-                                   align='center'),
-                           dbc.Col(
-                               dcc.Loading(
-                                   build_bar()
-                               ),
-                               align='center')], justify='center')])
+@app.callback(
+    Output(component_id='output', component_property='children'),
+    [Input(component_id='pop_dropdown', component_property='value')])
+def update_graph(value):
 
-    return layout
+    graph = build_graph(value)
+
+    return graph
+
+
+
+
+server = app.server
+if __name__ == '__main__':
+    app.run_server(debug=True)
